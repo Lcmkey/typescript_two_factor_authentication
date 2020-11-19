@@ -1,19 +1,21 @@
 import dotenv from "dotenv";
 import express, { Application, Request, Response } from "express";
 import speakeasy from "speakeasy";
+import QRCcode from "qrcode";
 import { v4 as uuidv4 } from "uuid";
 import { JsonDB } from "node-json-db";
 import { Config } from "node-json-db/dist/lib/JsonDBConfig";
+import fs from "fs";
 
 dotenv.config();
+
+const { APP_PORT = 4000 } = process.env;
 
 const db = new JsonDB(new Config("myDatabase", true, false, "/"));
 
 const app: Application = express();
 
 app.use(express.json());
-
-const { APP_PORT = 4000 } = process.env;
 
 app.get("/api", (req: Request, res: Response): void => {
   res.json({ msg: `Welcome to the Two Factor Authtication Example` });
@@ -34,8 +36,24 @@ app.post("/api/register", (req: Request, res: Response): void => {
 
   try {
     const path: string = `/user/${id}`;
-    const secret: secretInterface = speakeasy.generateSecret() as secretInterface;
+    const secret: secretInterface = speakeasy.generateSecret({
+      length: 32,
+    }) as secretInterface;
+
     const { base32 }: { base32: string } = secret;
+
+    QRCcode.toDataURL(secret.otpauth_url, (err, image_data) => {
+      const base64Image = image_data.split(";base64,").pop() as string;
+
+      fs.writeFile(
+        "assert/image.png",
+        base64Image,
+        { encoding: "base64" },
+        (err) => {
+          console.log("File created");
+        },
+      );
+    });
 
     db.push(path, { id, secret });
     res.json({ id, secret: base32 });
@@ -65,7 +83,7 @@ app.post("/api/validate", (req: Request, res: Response): void => {
       secret,
       encoding: "base32",
       token,
-      window: 1
+      window: 1,
     });
 
     if (tokenValidates) {
@@ -76,6 +94,25 @@ app.post("/api/validate", (req: Request, res: Response): void => {
   } catch (err: any) {
     console.log(err);
     res.status(500).json({ msg: "Error finding user" });
+  }
+});
+
+app.post("/api/getToken", (req: Request, res: Response): void => {
+  interface payloadInterface {
+    secret: string;
+  }
+  const { secret }: payloadInterface = req.body;
+
+  try {
+    const token = speakeasy.totp({
+      secret,
+      encoding: "base32",
+    });
+
+    res.json({ token });
+  } catch (err: any) {
+    console.log(err);
+    res.status(500).json({ msg: "Error: Get Token" });
   }
 });
 

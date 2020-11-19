@@ -22,7 +22,10 @@
     $ npm run dev
     ```
 
-4. Install Chrome Authenticator extension
+4. Install Authenticator
+
+    -   Chrome Authenticator extension
+    -   mobile App - Authy
 
 5. Registor
 
@@ -41,7 +44,28 @@
 
 6. add secret to Authenticator extension
 
-    ![2FA](./assert/2fa.png)
+   - Manualy add secret to chrom extension
+     
+       ![2FA][authenticator]
+       
+
+   - Add secret to authy through the `qrcode.png`
+     
+     ![2FA][qrcode]
+     ![2FA][authy]
+
+   - Call existing api to get token
+
+       ```properties
+       $ curl -X POST -H "Content-Type: application/json" -d '{"secret": "HRBVCPDFJEVEKT3FPEUHCN2JMZ2GYTJBINVXIJSEPJLG67LBOJEQ"}'  localhost:4000/api/getToken | jq
+       ```
+
+       output:
+       ```
+           {
+           "token": "245422"
+           }
+       ```
 
 7. Validate Secret
 
@@ -56,3 +80,8 @@
         "verified": false
     }
     ```
+
+[//]: # (Image References)
+[qrcode]: ./assert/qrcode.png
+[authy]: ./assert/authy.jpeg
+[authenticator]: ./assert/authenticator.png
