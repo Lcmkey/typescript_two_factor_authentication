@@ -42,15 +42,21 @@ app.post("/api/register", (req: Request, res: Response): void => {
 
     const { base32 }: { base32: string } = secret;
 
-    QRCcode.toDataURL(secret.otpauth_url, (err, image_data) => {
+    QRCcode.toDataURL(secret.otpauth_url, (err: any, image_data: string): void => {
+      if(err){
+        console.log("Generate QRCode image fail");
+        console.log(err);
+      }
+      
       const base64Image = image_data.split(";base64,").pop() as string;
 
       fs.writeFile(
-        "assert/image.png",
+        "assert/qrcode.png",
         base64Image,
         { encoding: "base64" },
-        (err) => {
+        (err: any): void => {
           console.log("File created");
+          console.log(err);
         },
       );
     });
